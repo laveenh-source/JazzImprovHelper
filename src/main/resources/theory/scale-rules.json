@@ -1,0 +1,281 @@
+{
+  "_readme": [
+    "Scale suggestions for every chord. Edit this file to change what the analyzer suggests.",
+    "RULES ARE TRIED TOP TO BOTTOM; THE FIRST RULE WHOSE 'when' MATCHES WINS. Put specific rules above general ones.",
+    "'when' keys (all optional, all must match; leave 'when' out for a catch-all):",
+    "  quality      chord qualities: MAJOR MINOR DIMINISHED AUGMENTED SUS2 SUS4 MAJOR6 MINOR6 MAJOR7 MINOR7 DOMINANT7",
+    "               MINOR_MAJOR7 HALF_DIMINISHED7 DIMINISHED7 AUGMENTED7 MAJOR7_SHARP5 DOMINANT7_SUS4",
+    "  function     TONIC SUBDOMINANT DOMINANT SECONDARY_DOMINANT TRITONE_SUBSTITUTION DIMINISHED_PASSING MODAL_INTERCHANGE UNCLASSIFIED",
+    "  degree       root above the local tonic: I bII II bIII III IV #IV V bVI VI bVII VII (case never matters, so 'II' means ii and II)",
+    "  resolution   MAJOR, MINOR or NONE: where the chord resolves (down a fifth; for dominants also down a half step)",
+    "  mode         MAJOR or MINOR (the local key)",
+    "  alterations  tones the chord must contain, e.g. ['#11'] or ['b9','b13']",
+    "  alt          true for altered dominants (7alt)",
+    "'scales' maps a scale name to its formula (scale degrees against a major scale, e.g. Dorian = 1 2 b3 4 5 6 b7).",
+    "'origin': 'spec' = from the original rule table; 'added' = my addition, please review.",
+    "Suggestions are listed in rank order (first = first choice)."
+  ],
+
+  "scales": {
+    "Ionian":               "1 2 3 4 5 6 7",
+    "Dorian":               "1 2 b3 4 5 6 b7",
+    "Phrygian":             "1 b2 b3 4 5 b6 b7",
+    "Lydian":               "1 2 3 #4 5 6 7",
+    "Mixolydian":           "1 2 3 4 5 6 b7",
+    "Aeolian":              "1 2 b3 4 5 b6 b7",
+    "Locrian":              "1 b2 b3 4 b5 b6 b7",
+    "Locrian #2":           "1 2 b3 4 b5 b6 b7",
+    "Melodic minor":        "1 2 b3 4 5 6 7",
+    "Harmonic minor":       "1 2 b3 4 5 b6 7",
+    "Phrygian dominant":    "1 b2 3 4 5 b6 b7",
+    "Altered":              "1 b2 b3 3 b5 b6 b7",
+    "Lydian dominant":      "1 2 3 #4 5 6 b7",
+    "Mixolydian b13":       "1 2 3 4 5 b6 b7",
+    "Half-whole diminished": "1 b2 b3 3 #4 5 6 b7",
+    "Whole-half diminished": "1 2 b3 4 b5 b6 6 7",
+    "Lydian augmented":     "1 2 3 #4 #5 6 7",
+    "Whole tone":           "1 2 3 #4 #5 b7"
+  },
+
+  "rules": [
+    {
+      "id": "dominant-altered",
+      "origin": "spec",
+      "when": { "quality": ["DOMINANT7"], "alt": true },
+      "suggestions": [
+        { "scale": "Altered", "reason": "7alt implies b9, #9, b5 and b13 together: the altered scale contains all of them" },
+        { "scale": "Half-whole diminished", "reason": "Symmetric alternative with b9 and #9; sounds a little less 'inside' than altered" }
+      ]
+    },
+    {
+      "id": "dominant-flat9-sharp11",
+      "origin": "added",
+      "when": { "quality": ["DOMINANT7"], "alterations": ["b9", "#11"] },
+      "suggestions": [
+        { "scale": "Half-whole diminished", "reason": "Contains both the b9 and the #11 written in the symbol, plus a natural 13" }
+      ]
+    },
+    {
+      "id": "dominant-sharp11",
+      "origin": "spec",
+      "when": { "quality": ["DOMINANT7"], "alterations": ["#11"] },
+      "suggestions": [
+        { "scale": "Lydian dominant", "reason": "A dominant 7 with a #11: Lydian dominant has the #4 and a b7" }
+      ]
+    },
+    {
+      "id": "tritone-substitution",
+      "origin": "spec",
+      "when": { "quality": ["DOMINANT7"], "function": ["TRITONE_SUBSTITUTION"] },
+      "suggestions": [
+        { "scale": "Lydian dominant", "reason": "Standard choice over a tritone substitution (bII7): it contains the tones that blend with the chord it replaces" }
+      ]
+    },
+    {
+      "id": "dominant-resolving-to-minor",
+      "origin": "spec",
+      "when": { "quality": ["DOMINANT7"], "function": ["DOMINANT", "SECONDARY_DOMINANT"], "resolution": ["MINOR"] },
+      "suggestions": [
+        { "scale": "Phrygian dominant", "reason": "Resolving to a minor chord: the b9 and b13 point to the minor tonic" },
+        { "scale": "Altered", "reason": "Maximum tension before resolving to the minor chord" },
+        { "scale": "Mixolydian b13", "reason": "Milder option: keeps the natural 9 but still has the minor-flavoured b13" }
+      ]
+    },
+    {
+      "id": "dominant-flat13",
+      "origin": "added",
+      "when": { "quality": ["DOMINANT7"], "alterations": ["b13"] },
+      "suggestions": [
+        { "scale": "Mixolydian b13", "reason": "The symbol asks for a b13 and nothing else altered" }
+      ]
+    },
+    {
+      "id": "dominant-flat9",
+      "origin": "added",
+      "when": { "quality": ["DOMINANT7"], "alterations": ["b9"] },
+      "suggestions": [
+        { "scale": "Half-whole diminished", "reason": "Has the b9 from the symbol and keeps the natural 13" },
+        { "scale": "Phrygian dominant", "reason": "Has the b9 and a b13 colour" }
+      ]
+    },
+    {
+      "id": "dominant-as-V",
+      "origin": "spec",
+      "when": { "quality": ["DOMINANT7"], "function": ["DOMINANT", "SECONDARY_DOMINANT"] },
+      "suggestions": [
+        { "scale": "Mixolydian", "reason": "Standard choice over a dominant 7 resolving to a major chord" },
+        { "scale": "Altered", "reason": "Adds tension (b9, #9, b5, b13) before the resolution" }
+      ]
+    },
+    {
+      "id": "dominant-backdoor",
+      "origin": "added",
+      "when": { "quality": ["DOMINANT7"], "degree": ["bVII"], "function": ["MODAL_INTERCHANGE"] },
+      "suggestions": [
+        { "scale": "Lydian dominant", "reason": "bVII7 (the 'backdoor' dominant) usually takes Lydian dominant" },
+        { "scale": "Mixolydian", "reason": "Plain alternative that stays closest to the chord" }
+      ]
+    },
+    {
+      "id": "dominant-default",
+      "origin": "added",
+      "when": { "quality": ["DOMINANT7"] },
+      "suggestions": [
+        { "scale": "Mixolydian", "reason": "Default for a dominant 7 chord that does not resolve in a recognised way" }
+      ]
+    },
+    {
+      "id": "augmented-seventh",
+      "origin": "added",
+      "when": { "quality": ["AUGMENTED7"] },
+      "suggestions": [
+        { "scale": "Whole tone", "reason": "A 7#5 chord is built from whole-tone tones" },
+        { "scale": "Altered", "reason": "Alternative with more tension" }
+      ]
+    },
+    {
+      "id": "suspended",
+      "origin": "added",
+      "when": { "quality": ["DOMINANT7_SUS4", "SUS4"] },
+      "suggestions": [
+        { "scale": "Mixolydian", "reason": "Suspended dominant: Mixolydian contains the natural 4 and b7" }
+      ]
+    },
+    {
+      "id": "minor-seventh-flat5",
+      "origin": "spec",
+      "when": { "quality": ["HALF_DIMINISHED7"] },
+      "suggestions": [
+        { "scale": "Locrian", "reason": "The scale built on the chord: m7b5 is the Locrian chord" },
+        { "scale": "Locrian #2", "reason": "Same, with a natural 9 that sounds better over a minor ii" }
+      ]
+    },
+    {
+      "id": "diminished-seventh",
+      "origin": "spec",
+      "when": { "quality": ["DIMINISHED7"] },
+      "suggestions": [
+        { "scale": "Whole-half diminished", "reason": "Symmetric scale that fits the dim7 chord exactly" }
+      ]
+    },
+    {
+      "id": "diminished-triad",
+      "origin": "added",
+      "when": { "quality": ["DIMINISHED"] },
+      "suggestions": [
+        { "scale": "Whole-half diminished", "reason": "Symmetric scale that contains the diminished triad" }
+      ]
+    },
+    {
+      "id": "minor-major-seventh",
+      "origin": "spec",
+      "when": { "quality": ["MINOR_MAJOR7"] },
+      "suggestions": [
+        { "scale": "Melodic minor", "reason": "mMaj7 is the tonic chord of melodic minor" },
+        { "scale": "Harmonic minor", "reason": "Also contains the major 7th over a minor triad (added alternative)" }
+      ]
+    },
+    {
+      "id": "major-seventh-sharp5",
+      "origin": "spec",
+      "when": { "quality": ["MAJOR7_SHARP5"] },
+      "suggestions": [
+        { "scale": "Lydian augmented", "reason": "Contains the #5 and the major 7th of the chord" }
+      ]
+    },
+    {
+      "id": "augmented-triad",
+      "origin": "added",
+      "when": { "quality": ["AUGMENTED"] },
+      "suggestions": [
+        { "scale": "Lydian augmented", "reason": "Contains the augmented triad with a major 7th" },
+        { "scale": "Whole tone", "reason": "Symmetric alternative built from the same tones" }
+      ]
+    },
+    {
+      "id": "major-as-dominant-triad",
+      "origin": "added",
+      "when": { "quality": ["MAJOR"], "degree": ["V"], "function": ["DOMINANT"] },
+      "suggestions": [
+        { "scale": "Mixolydian", "reason": "A plain major chord on V acts as the dominant" }
+      ]
+    },
+    {
+      "id": "major-as-I",
+      "origin": "spec",
+      "when": { "quality": ["MAJOR7", "MAJOR6", "MAJOR"], "degree": ["I"] },
+      "suggestions": [
+        { "scale": "Ionian", "reason": "Standard choice over a major chord on the tonic" },
+        { "scale": "Lydian", "reason": "Brighter alternative: the #11 avoids the clash of the natural 4" }
+      ]
+    },
+    {
+      "id": "major-as-IV",
+      "origin": "spec",
+      "when": { "quality": ["MAJOR7", "MAJOR6", "MAJOR"], "degree": ["IV", "bVI"] },
+      "suggestions": [
+        { "scale": "Lydian", "reason": "Standard choice over a major chord on IV: the #11 is the diatonic note" },
+        { "scale": "Ionian", "reason": "Plain major scale, if the natural 4 is acceptable" }
+      ]
+    },
+    {
+      "id": "major-default",
+      "origin": "added",
+      "when": { "quality": ["MAJOR7", "MAJOR6", "MAJOR"] },
+      "suggestions": [
+        { "scale": "Ionian", "reason": "Default for a major chord with no more specific role" },
+        { "scale": "Lydian", "reason": "Brighter alternative" }
+      ]
+    },
+    {
+      "id": "minor-as-ii",
+      "origin": "spec",
+      "when": { "quality": ["MINOR7", "MINOR"], "degree": ["II"] },
+      "suggestions": [
+        { "scale": "Dorian", "reason": "Standard choice over a ii chord" }
+      ]
+    },
+    {
+      "id": "minor-as-iii",
+      "origin": "spec",
+      "when": { "quality": ["MINOR7", "MINOR"], "degree": ["III"] },
+      "suggestions": [
+        { "scale": "Phrygian", "reason": "Standard choice over a iii chord" }
+      ]
+    },
+    {
+      "id": "minor-as-vi",
+      "origin": "spec",
+      "when": { "quality": ["MINOR7", "MINOR"], "degree": ["VI"] },
+      "suggestions": [
+        { "scale": "Aeolian", "reason": "Standard choice over a vi chord" }
+      ]
+    },
+    {
+      "id": "minor-as-tonic-or-iv",
+      "origin": "added",
+      "when": { "quality": ["MINOR7", "MINOR"], "degree": ["I", "IV"] },
+      "suggestions": [
+        { "scale": "Dorian", "reason": "Common first choice over a minor tonic or iv chord" },
+        { "scale": "Aeolian", "reason": "Darker natural-minor alternative" }
+      ]
+    },
+    {
+      "id": "minor-sixth",
+      "origin": "added",
+      "when": { "quality": ["MINOR6"] },
+      "suggestions": [
+        { "scale": "Dorian", "reason": "Has the natural 6th the chord asks for" },
+        { "scale": "Melodic minor", "reason": "Also has the natural 6th and a major 7th" }
+      ]
+    },
+    {
+      "id": "minor-default",
+      "origin": "added",
+      "when": { "quality": ["MINOR7", "MINOR"] },
+      "suggestions": [
+        { "scale": "Dorian", "reason": "Default for a minor chord with no more specific role" }
+      ]
+    }
+  ]
+}
