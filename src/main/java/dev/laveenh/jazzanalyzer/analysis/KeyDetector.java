@@ -19,7 +19,7 @@ import java.util.List;
  * <ol>
  *   <li>Each chord gets a score for each of the 24 keys: how many of its chord tones are in the
  *       key's scale, plus bonuses for being a tonic chord and for matching the key signature.</li>
- *       <li>Every ii-V-I / ii-V-i found in the chord list adds a big bonus to its target key for the
+ *   <li>Every ii-V-I / ii-V-i found in the chord list adds a big bonus to its target key for the
  *       chords involved. This is how a modulation is recognised.</li>
  *   <li>A dynamic-programming pass picks one key per chord that maximises the total score, where
  *       changing key costs a fixed penalty. The penalty stops the answer flickering between keys
@@ -33,7 +33,13 @@ public final class KeyDetector {
     private static final double MAJOR_PATTERN_BONUS = 1.5;
     /** Lower: a ii-V-i inside a major tune is usually a tonicised ii/iii/vi, not a modulation. */
     private static final double MINOR_PATTERN_BONUS = 1.0;
-    private static final double SWITCH_PENALTY = 2.0;
+    /**
+     * Cost of changing key between two chords, in units of "one chord that fits the key perfectly".
+     * Tuned against the test tunes: every key-detection test passes for 1.0-2.0 and fails outside that
+     * range (too low and a one-chord detour counts as a modulation; too high and a four-bar key centre in
+     * a tune like Autumn Leaves is swallowed). 1.5 is the middle of the working range.
+     */
+    private static final double SWITCH_PENALTY = 1.5;
     private static final double SIGNATURE_BONUS = 0.6;
     private static final double RELATIVE_SIGNATURE_BONUS = 0.25;
     private static final double TONIC_CHORD_BONUS = 0.25;
@@ -121,7 +127,8 @@ public final class KeyDetector {
 
     // ------------------------------------------------------------ scoring
 
-    private double[][] localScores(Chart chart, List<Pattern> patterns) {
+    /** Score of every chord (rows) for each of the 24 keys (columns). Package-private so it can be inspected. */
+    double[][] localScores(Chart chart, List<Pattern> patterns) {
         List<PlacedChord> chords = chart.chords();
         int n = chords.size();
         double[][] score = new double[n][KEY_COUNT];
@@ -154,6 +161,12 @@ public final class KeyDetector {
             double bonus = p.keyIndex() >= 12 ? MINOR_PATTERN_BONUS : MAJOR_PATTERN_BONUS;
             for (int i = p.startChord(); i <= p.endChord(); i++) {
                 score[i][p.keyIndex()] += bonus;
+            }
+            // Momentum: a chord right after the cadence that still fits the new key (a IV or vi after the I)
+            // most likely continues it, rather than being the first chord of the old key coming back.
+            int after = p.endChord() + 1;
+            if (after < n && fit(chords.get(after).chord(), p.keyIndex()) == 1.0) {
+                score[after][p.keyIndex()] += bonus / 2;
             }
         }
         return score;

@@ -193,4 +193,29 @@ class KeyDetectorTest {
         assertThat(detector.findPatterns(chart(null, "Dm7 | A7 | Gmaj7").chords())).isEmpty();
         assertThat(detector.findPatterns(chart(null, "Cmaj7 | G7 | Cmaj7").chords())).isEmpty();
     }
+
+    // The changes of "Autumn Leaves" in G minor, 32 bars, AABA. It is the classic example of a tune that
+    // alternates between a ii-V-I in Bb major (the relative major) and a ii-V-i in G minor.
+    private static final String AUTUMN_A = "Cm7 | F7 | Bbmaj7 | Ebmaj7 | Am7b5 | D7 | Gm | Gm";
+    private static final String AUTUMN_B = "Am7b5 | D7 | Gm | Gm | Cm7 | F7 | Bbmaj7 | Ebmaj7";
+    private static final String AUTUMN_LEAVES = String.join(" | ", AUTUMN_A, AUTUMN_A, AUTUMN_B, AUTUMN_A);
+
+    @Test
+    void autumnLeavesAlternatesBetweenTheRelativeMajorAndMinor() {
+        Key gMinor = Key.fromSignature(-2, "minor");
+        List<KeyRegion> regions = regions(gMinor, AUTUMN_LEAVES);
+
+        assertThat(regions).extracting(r -> r.key().toString() + " " + r.startMeasure() + "-" + r.endMeasure())
+                .containsExactly("Bb major 1-4", "G minor 5-8", "Bb major 9-12",
+                        "G minor 13-20", "Bb major 21-28", "G minor 29-32");
+        assertThat(regions.get(0).reason()).isEqualTo("ii-V-I in measures 1-3");
+        assertThat(regions.get(1).reason()).isEqualTo("ii-V-i in measures 5-7");
+    }
+
+    @Test
+    void autumnLeavesWithoutAKeySignatureStillFindsTheSameCenters() {
+        List<KeyRegion> regions = regions(null, AUTUMN_LEAVES);
+        assertThat(regions).extracting(r -> r.key().toString())
+                .containsExactly("Bb major", "G minor", "Bb major", "G minor", "Bb major", "G minor");
+    }
 }
