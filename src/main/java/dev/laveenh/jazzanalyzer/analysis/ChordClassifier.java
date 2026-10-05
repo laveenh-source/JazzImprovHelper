@@ -52,7 +52,7 @@ public final class ChordClassifier {
             }
         }
 
-        quality = impliedSeventh(quality, extension, alterations);
+        quality = impliedSeventh(quality, alterations);
 
         boolean alt = quality == ChordQuality.DOMINANT7 && isAlt(spec.kindText(), alterations);
         if (!alt) {
@@ -62,13 +62,13 @@ public final class ChordClassifier {
     }
 
     /**
-     * Lead-sheet convention: a plain triad that carries an extension or alteration (C9, C13, C#11, C+7#5...)
+     * Lead-sheet convention: a plain triad that carries an <em>alteration</em> (C7#5 written as C#5, C7b9, C7#11...)
      * implies a flat 7th, so a major triad becomes a dominant 7 and a minor triad a minor 7.
-     * A major 7th is never implied; it has to be written (kind major-seventh), and then this does not apply.
+     * Two things are deliberately not implied: a major 7th (it has to be written), and a seventh for a
+     * natural added tone: Cadd9 is C E G D, the triad plus a 9th, with no 7th.
      */
-    private static ChordQuality impliedSeventh(ChordQuality quality, int extension, Set<Alteration> alterations) {
-        boolean hasTension = extension > 0 || !alterations.isEmpty();
-        if (!hasTension) {
+    private static ChordQuality impliedSeventh(ChordQuality quality, Set<Alteration> alterations) {
+        if (alterations.isEmpty()) {
             return quality;
         }
         return switch (quality) {

@@ -181,22 +181,36 @@ class ChordClassifierTest {
     }
 
     @Test
-    void tensionsOnAPlainMajorTriadImplyAFlatSeventh() {
+    void alterationsOnAPlainMajorTriadImplyAFlatSeventh() {
         assertThat(classifier.classify(spec("major", null, alter(9, -1))).quality()).isEqualTo(DOMINANT7);
         assertThat(classifier.classify(spec("major", null, add(11, 1))).symbol()).isEqualTo("C7#11");
-        assertThat(classifier.classify(spec("major", null, add(13, 0))))
-                .satisfies(c -> {
-                    assertThat(c.quality()).isEqualTo(DOMINANT7);
-                    assertThat(c.symbol()).isEqualTo("C13");
-                });
         // a lone #5 becomes C7#5 (augmented seventh), not a plain C#5 triad
         assertThat(classifier.classify(spec("major", null, alter(5, 1))).quality()).isEqualTo(AUGMENTED7);
     }
 
     @Test
-    void tensionsOnAMinorTriadImplyAMinorSeventh() {
-        assertThat(classifier.classify(spec("minor", null, add(9, 0))).symbol()).isEqualTo("Cm9");
+    void alterationsOnAPlainMinorTriadImplyAMinorSeventh() {
+        assertThat(classifier.classify(spec("minor", null, alter(9, -1))).quality()).isEqualTo(MINOR7);
         assertThat(classifier.classify(spec("minor", null, alter(5, -1))).quality()).isEqualTo(HALF_DIMINISHED7);
+    }
+
+    @Test
+    void aNaturalAddedToneIsAnAddChordWithNoSeventh() {
+        Chord cadd9 = classifier.classify(spec("major", null, add(9, 0)));
+        assertThat(cadd9.quality()).isEqualTo(MAJOR);
+        assertThat(cadd9.extension()).isEqualTo(9);
+        assertThat(cadd9.symbol()).isEqualTo("Cadd9");
+
+        assertThat(classifier.classify(spec("minor", null, add(9, 0))).symbol()).isEqualTo("Cmadd9");
+        assertThat(classifier.classify(spec("major", null, add(11, 0))).symbol()).isEqualTo("Cadd11");
+        assertThat(classifier.classify(spec("major", null, add(13, 0))).quality()).isEqualTo(MAJOR);
+    }
+
+    @Test
+    void ninthKindsAreStillSevenChords() {
+        // C9 is written as kind dominant-ninth, which is a different thing from Cadd9
+        assertThat(classifier.classify(spec("dominant-ninth", null)).symbol()).isEqualTo("C9");
+        assertThat(classifier.classify(spec("minor-ninth", null)).symbol()).isEqualTo("Cm9");
     }
 
     @Test
