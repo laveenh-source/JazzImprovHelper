@@ -16,4 +16,19 @@ class KeyTest {
     void fromFifthsSpellsTheTonicCorrectly(int fifths, Mode mode, String expected) {
         assertThat(Key.fromFifths(fifths, mode)).hasToString(expected);
     }
+
+    @ParameterizedTest(name = "{0} fifths, mode {1} -> {2}")
+    @CsvSource({
+            "0,dorian,D minor", "0,phrygian,E minor", "0,lydian,F major", "0,mixolydian,G major",
+            "0,aeolian,A minor", "0,locrian,B minor", "-1,mixolydian,C major", "-2,dorian,C minor",
+            "0,major,C major", "0,ionian,C major", "0,minor,A minor", "-2,MAJOR,Bb major"})
+    void fromSignatureReadsChurchModesByTheirTonalCenter(int fifths, String mode, String expected) {
+        assertThat(Key.fromSignature(fifths, mode)).hasToString(expected);
+    }
+
+    @org.junit.jupiter.api.Test
+    void missingOrUnknownModeMeansMajor() {
+        assertThat(Key.fromSignature(-3, null)).hasToString("Eb major");
+        assertThat(Key.fromSignature(-3, "whatever")).hasToString("Eb major");
+    }
 }

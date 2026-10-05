@@ -6,7 +6,6 @@ import dev.laveenh.jazzanalyzer.domain.ChordSpec;
 import dev.laveenh.jazzanalyzer.domain.ChordSpec.Degree;
 import dev.laveenh.jazzanalyzer.domain.ChordSpec.DegreeType;
 import dev.laveenh.jazzanalyzer.domain.Key;
-import dev.laveenh.jazzanalyzer.domain.Mode;
 import dev.laveenh.jazzanalyzer.domain.Note;
 import dev.laveenh.jazzanalyzer.domain.PlacedChord;
 import dev.laveenh.jazzanalyzer.domain.TimeSignature;
@@ -131,7 +130,7 @@ public final class MusicXmlParser {
         if (reader.chords.isEmpty()) {
             throw new NoChordSymbolsException(); // only N.C. symbols
         }
-        return new Chart(title(root), reader.keySignature, reader.timeSignature, reader.chords, reader.measureCount);
+        return new Chart(title(root), reader.keySignature, reader.timeSignature, reader.chords, reader.measureCount, reader.lastMeasure);
     }
 
     private static String title(Element root) {
@@ -159,6 +158,7 @@ public final class MusicXmlParser {
         private Key keySignature;
         private TimeSignature timeSignature;
         private int measureCount;
+        private int lastMeasure;
 
         private int divisions = 1;      // divisions per quarter note (changes via <attributes>)
         private int beatType = 4;       // denominator of the current time signature
@@ -168,7 +168,8 @@ public final class MusicXmlParser {
             for (Element measure : children(part, "measure")) {
                 index++;
                 measureCount++;
-                readMeasure(measure, measureNumber(measure, index));
+                lastMeasure = measureNumber(measure, index);
+                readMeasure(measure, lastMeasure);
             }
         }
 
@@ -232,9 +233,7 @@ public final class MusicXmlParser {
         if (fifths == null) {
             return null;
         }
-        String mode = childText(key, "mode");
-        Mode m = "minor".equalsIgnoreCase(mode == null ? null : mode.trim()) ? Mode.MINOR : Mode.MAJOR;
-        return Key.fromFifths(fifths, m);
+        return Key.fromSignature(fifths, childText(key, "mode"));
     }
 
     private static ChordSpec readHarmony(Element harmony, int measureNumber) {

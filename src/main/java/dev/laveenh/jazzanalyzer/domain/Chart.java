@@ -10,9 +10,10 @@ import java.util.List;
  * @param timeSignature time signature, or null if none was given
  * @param chords       all chord symbols in score order
  * @param measureCount number of measures in the part that carried the chords
+ * @param lastMeasure  number of the final measure as printed in the file
  */
 public record Chart(String title, Key keySignature, TimeSignature timeSignature,
-                    List<PlacedChord> chords, int measureCount) {
+                    List<PlacedChord> chords, int measureCount, int lastMeasure) {
 
     public Chart {
         chords = List.copyOf(chords);
