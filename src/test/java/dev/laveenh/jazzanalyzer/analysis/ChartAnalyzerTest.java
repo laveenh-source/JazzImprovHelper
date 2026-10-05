@@ -79,7 +79,7 @@ class ChartAnalyzerTest {
 
         ChordAnalysis bm7b5 = a.chords().get(0);
         assertThat(bm7b5.roman()).isEqualTo("iiø7");
-        assertThat(scales(bm7b5)).containsExactly("Locrian", "Locrian #2");
+        assertThat(scales(bm7b5)).containsExactly("Locrian #2", "Locrian");
 
         ChordAnalysis e7alt = a.chords().get(1);
         assertThat(e7alt.roman()).isEqualTo("V7alt");

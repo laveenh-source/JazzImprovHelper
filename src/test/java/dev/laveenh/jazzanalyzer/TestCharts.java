@@ -88,6 +88,20 @@ public final class TestCharts {
                 kind = "dominant";
                 d.add(new Degree(13, -1, DegreeType.ALTER));
             }
+            case "add9" -> {
+                kind = "major";
+                d.add(new Degree(9, 0, DegreeType.ADD));
+            }
+            case "7b9#9" -> {
+                kind = "dominant";
+                d.add(new Degree(9, -1, DegreeType.ALTER));
+                d.add(new Degree(9, 1, DegreeType.ALTER));
+            }
+            case "7b9b13" -> {
+                kind = "dominant";
+                d.add(new Degree(9, -1, DegreeType.ALTER));
+                d.add(new Degree(13, -1, DegreeType.ALTER));
+            }
             case "7b9#11" -> {
                 kind = "dominant";
                 d.add(new Degree(9, -1, DegreeType.ALTER));

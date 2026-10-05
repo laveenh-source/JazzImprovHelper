@@ -47,13 +47,19 @@ class ScaleSuggesterTest {
             "C major;Dm7 | Db7 | Cmaj7;1;Lydian dominant",                             // bII7
             "C major;Cmaj7 | G7#11 | Cmaj7;1;Lydian dominant",                         // dom7 with #11
             "C major;Cmaj7 | G7alt | Cmaj7;1;Altered,Half-whole diminished",           // 7alt
-            "C major;Cmaj7 | Bm7b5 | Cmaj7;1;Locrian,Locrian #2",                     // m7b5
+            "C major;Cmaj7 | Bm7b5 | Cmaj7;1;Locrian,Locrian #2",                     // m7b5 as vii in a major key
+            "C minor;Dm7b5 | G7 | Cm7;0;Locrian #2,Locrian",                           // iiø7 in a minor key
+            "C major;Cmaj7 | Cadd9 | Cmaj7;1;Ionian,Lydian",                           // triad plus 9, no b7
             "C major;Cmaj7 | C#dim7 | Dm7;1;Whole-half diminished",                   // dim7
             "C minor;Cm7 | CmMaj7 | Cm7;1;Melodic minor,Harmonic minor",              // mMaj7
             "C major;Cmaj7 | Cmaj7#5 | Cmaj7;1;Lydian augmented",                     // maj7#5
             // additions beyond the original table
             "C major;Cmaj7 | G7b13 | Cmaj7;1;Mixolydian b13",
-            "C major;Cmaj7 | G7b9 | Cmaj7;1;Half-whole diminished,Phrygian dominant",
+            "C major;Cmaj7 | G7b9 | Cmaj7;1;Half-whole diminished",
+            "C major;Dm7 | A7b9 | Dm7;1;Half-whole diminished",                         // just b9, even resolving to minor
+            "C major;Cmaj7 | G7b9#9 | Cmaj7;1;Altered,Half-whole diminished",           // two altered tensions = alt
+            "C major;Cmaj7 | G7b9b13 | Cmaj7;1;Altered,Half-whole diminished",
+            "C minor;Dm7b5 | G7b9 | Cm7;1;Half-whole diminished",
             "C major;Cmaj7 | G7b9#11 | Cmaj7;1;Half-whole diminished",
             "C major;Cmaj7 | G7sus4 | Cmaj7;1;Mixolydian",
             "C major;Cmaj7 | G7#5 | Cmaj7;1;Whole tone,Altered",

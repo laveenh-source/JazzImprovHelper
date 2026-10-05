@@ -9,10 +9,11 @@
     "  degree       root above the local tonic: I bII II bIII III IV #IV V bVI VI bVII VII (case never matters, so 'II' means ii and II)",
     "  resolution   MAJOR, MINOR or NONE: where the chord resolves (down a fifth; for dominants also down a half step)",
     "  mode         MAJOR or MINOR (the local key)",
-    "  alterations  tones the chord must contain, e.g. ['#11'] or ['b9','b13']",
+    "  alterations  tones the chord must contain (it may contain others too), e.g. ['#11'] or ['b9','b13']",
+    "  exactAlterations  the chord's alterations must be exactly these and nothing else, e.g. ['b9'] means 'just a b9'",
     "  alt          true for altered dominants (7alt)",
     "'scales' maps a scale name to its formula (scale degrees against a major scale, e.g. Dorian = 1 2 b3 4 5 6 b7).",
-    "'origin': 'spec' = from the original rule table; 'added' = my addition, please review.",
+    "'origin': 'spec' = from the original rule table; 'added' = an addition. 'note' (optional) is a free-text comment.",
     "Suggestions are listed in rank order (first = first choice)."
   ],
 
@@ -45,6 +46,15 @@
       "suggestions": [
         { "scale": "Altered", "reason": "7alt implies b9, #9, b5 and b13 together: the altered scale contains all of them" },
         { "scale": "Half-whole diminished", "reason": "Symmetric alternative with b9 and #9; sounds a little less 'inside' than altered" }
+      ]
+    },
+    {
+      "id": "dominant-just-flat9",
+      "origin": "added",
+      "note": "Author's rule: a dominant with only a b9 (7b9) takes half-whole diminished, even when it resolves to a minor chord.",
+      "when": { "quality": ["DOMINANT7"], "exactAlterations": ["b9"] },
+      "suggestions": [
+        { "scale": "Half-whole diminished", "reason": "A dominant with only a b9 (7b9): half-whole diminished has the b9 and keeps the natural 13" }
       ]
     },
     {
@@ -87,15 +97,6 @@
       "when": { "quality": ["DOMINANT7"], "alterations": ["b13"] },
       "suggestions": [
         { "scale": "Mixolydian b13", "reason": "The symbol asks for a b13 and nothing else altered" }
-      ]
-    },
-    {
-      "id": "dominant-flat9",
-      "origin": "added",
-      "when": { "quality": ["DOMINANT7"], "alterations": ["b9"] },
-      "suggestions": [
-        { "scale": "Half-whole diminished", "reason": "Has the b9 from the symbol and keeps the natural 13" },
-        { "scale": "Phrygian dominant", "reason": "Has the b9 and a b13 colour" }
       ]
     },
     {
@@ -142,12 +143,22 @@
       ]
     },
     {
+      "id": "minor-seventh-flat5-as-ii-in-minor",
+      "origin": "added",
+      "note": "Author's rule: iiø7 in a minor key takes Locrian #2 first. (In a major key viiø7 keeps Locrian first, below.)",
+      "when": { "quality": ["HALF_DIMINISHED7"], "degree": ["II"], "mode": "MINOR" },
+      "suggestions": [
+        { "scale": "Locrian #2", "reason": "Standard choice over the iiø7 of a minor key: the natural 9 fits the key, where plain Locrian's b9 would clash" },
+        { "scale": "Locrian", "reason": "Plain Locrian: the mode built on the chord itself" }
+      ]
+    },
+    {
       "id": "minor-seventh-flat5",
       "origin": "spec",
       "when": { "quality": ["HALF_DIMINISHED7"] },
       "suggestions": [
         { "scale": "Locrian", "reason": "The scale built on the chord: m7b5 is the Locrian chord" },
-        { "scale": "Locrian #2", "reason": "Same, with a natural 9 that sounds better over a minor ii" }
+        { "scale": "Locrian #2", "reason": "Same, with a natural 9 (softer than plain Locrian)" }
       ]
     },
     {

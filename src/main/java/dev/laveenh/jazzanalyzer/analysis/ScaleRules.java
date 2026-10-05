@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The ranked scale rule table, loaded from {@code theory/scale-rules.json} and validated on load,
@@ -29,11 +30,11 @@ public final class ScaleRules {
     record RulesFile(Map<String, String> scales, List<Rule> rules) {
     }
 
-    record Rule(String id, String origin, When when, List<Suggestion> suggestions) {
+    record Rule(String id, String origin, String note, When when, List<Suggestion> suggestions) {
     }
 
     record When(List<String> quality, List<String> function, List<String> degree, List<String> resolution,
-                String mode, List<String> alterations, Boolean alt) {
+                String mode, List<String> alterations, List<String> exactAlterations, Boolean alt) {
     }
 
     record Suggestion(String scale, String reason) {
@@ -85,7 +86,8 @@ public final class ScaleRules {
                 && oneOf(when.resolution(), c.resolution().name())
                 && (when.mode() == null || when.mode().equals(c.key().mode().name()))
                 && (when.alt() == null || when.alt() == c.chord().alt())
-                && hasAllAlterations(when.alterations(), c);
+                && hasAllAlterations(when.alterations(), c)
+                && hasExactlyAlterations(when.exactAlterations(), c);
     }
 
     private static boolean oneOf(List<String> allowed, String value) {
@@ -102,6 +104,15 @@ public final class ScaleRules {
         }
         List<String> present = c.chord().alterations().stream().map(Object::toString).toList();
         return present.containsAll(required);
+    }
+
+    /** True when the chord's alterations are exactly this set: 'just a b9', not 'b9 and something else'. */
+    private static boolean hasExactlyAlterations(List<String> exact, ChordContext c) {
+        if (exact == null) {
+            return true;
+        }
+        Set<String> present = c.chord().alterations().stream().map(Object::toString).collect(Collectors.toSet());
+        return present.equals(Set.copyOf(exact));
     }
 
     // ------------------------------------------------------------ validation
