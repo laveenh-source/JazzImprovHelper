@@ -179,4 +179,37 @@ class ChordClassifierTest {
         assertThat(table.lookup(" major-seventh ").quality()).isEqualTo(MAJOR7);
         assertThat(Set.of(table.lookup("nope").quality())).containsExactly(UNKNOWN);
     }
+
+    @Test
+    void tensionsOnAPlainMajorTriadImplyAFlatSeventh() {
+        assertThat(classifier.classify(spec("major", null, alter(9, -1))).quality()).isEqualTo(DOMINANT7);
+        assertThat(classifier.classify(spec("major", null, add(11, 1))).symbol()).isEqualTo("C7#11");
+        assertThat(classifier.classify(spec("major", null, add(13, 0))))
+                .satisfies(c -> {
+                    assertThat(c.quality()).isEqualTo(DOMINANT7);
+                    assertThat(c.symbol()).isEqualTo("C13");
+                });
+        // a lone #5 becomes C7#5 (augmented seventh), not a plain C#5 triad
+        assertThat(classifier.classify(spec("major", null, alter(5, 1))).quality()).isEqualTo(AUGMENTED7);
+    }
+
+    @Test
+    void tensionsOnAMinorTriadImplyAMinorSeventh() {
+        assertThat(classifier.classify(spec("minor", null, add(9, 0))).symbol()).isEqualTo("Cm9");
+        assertThat(classifier.classify(spec("minor", null, alter(5, -1))).quality()).isEqualTo(HALF_DIMINISHED7);
+    }
+
+    @Test
+    void aMajorSeventhIsNeverImplied() {
+        assertThat(classifier.classify(spec("major-seventh", null, add(9, 0))).symbol()).isEqualTo("Cmaj9");
+        assertThat(classifier.classify(spec("major-seventh", null, add(11, 1))).quality()).isEqualTo(MAJOR7);
+        assertThat(classifier.classify(spec("major-seventh", null, alter(5, 1))).quality()).isEqualTo(MAJOR7_SHARP5);
+    }
+
+    @Test
+    void sixthChordsAndOtherTriadsAreNotTurnedIntoSevenths() {
+        assertThat(classifier.classify(spec("major-sixth", null, add(9, 0))).symbol()).isEqualTo("C6/9");
+        assertThat(classifier.classify(spec("diminished", null, alter(5, -1))).quality()).isEqualTo(DIMINISHED);
+        assertThat(classifier.classify(spec("major", null)).quality()).isEqualTo(MAJOR);
+    }
 }
