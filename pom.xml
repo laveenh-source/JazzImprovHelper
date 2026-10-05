@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.jazzanalyzer</groupId>
+    <groupId>dev.laveenh.jazzanalyzer</groupId>
     <artifactId>jazz-analyzer</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>Jazz Chart Analyzer</name>
@@ -69,8 +69,8 @@
                                 <rule>
                                     <element>PACKAGE</element>
                                     <includes>
-                                        <include>com.jazzanalyzer.domain</include>
-                                        <include>com.jazzanalyzer.analysis</include>
+                                        <include>dev.laveenh.jazzanalyzer.domain</include>
+                                        <include>dev.laveenh.jazzanalyzer.analysis</include>
                                     </includes>
                                     <limits>
                                         <limit>
