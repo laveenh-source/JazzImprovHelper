@@ -1,0 +1,1 @@
+{"scales":{"Dorian":"1 2 b3 4 5 6 b7","Aeolian":"1 2 b3 4 5 b6 b7"},"rules":[{"id":"minor-key-only","when":{"mode":"MINOR","quality":["MINOR7"]},"suggestions":[{"scale":"Aeolian","reason":"minor key"}]},{"id":"catch-all","suggestions":[{"scale":"Dorian","reason":"anything"}]}]}

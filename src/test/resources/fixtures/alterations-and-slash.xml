@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <work><work-title>Alterations and slash chords</work-title></work>
+  <part-list><score-part id="P1"><part-name>Lead sheet</part-name></score-part></part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions><key><fifths>-2</fifths><mode>major</mode></key><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <harmony>
+        <root><root-step>G</root-step></root>
+        <kind text="7b9#11">dominant</kind>
+        <degree><degree-value>9</degree-value><degree-alter>-1</degree-alter><degree-type>alter</degree-type></degree>
+        <degree><degree-value>11</degree-value><degree-alter>1</degree-alter><degree-type>add</degree-type></degree>
+      </harmony>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure number="2">
+      <harmony>
+        <root><root-step>C</root-step></root>
+        <kind>major</kind>
+        <bass><bass-step>E</bass-step></bass>
+      </harmony>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure number="3">
+      <harmony>
+        <root><root-step>B</root-step><root-alter>-1</root-alter></root>
+        <kind text="7alt">dominant</kind>
+      </harmony>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure number="4">
+      <harmony>
+        <root><root-step>C</root-step></root>
+        <kind text="maj7#5">major-seventh</kind>
+        <degree><degree-value>5</degree-value><degree-alter>1</degree-alter><degree-type>alter</degree-type></degree>
+      </harmony>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure number="5">
+      <harmony>
+        <root><root-step>F</root-step><root-alter>1</root-alter></root>
+        <kind text="9">dominant-ninth</kind>
+        <bass><bass-step>A</bass-step><bass-alter>1</bass-alter></bass>
+      </harmony>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+    <measure number="6">
+      <harmony>
+        <root><root-step>D</root-step><root-alter>-1</root-alter></root>
+        <kind text="7sus4">suspended-fourth</kind>
+        <degree><degree-value>7</degree-value><degree-alter>0</degree-alter><degree-type>add</degree-type></degree>
+      </harmony>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>

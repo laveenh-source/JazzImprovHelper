@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: jazz-analyzer
+  datasource:
+    # Local development defaults only. Real deployments set DB_URL, DB_USER and DB_PASSWORD
+    # (from AWS Secrets Manager in production); nothing secret lives in this repository.
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/jazz}
+    username: ${DB_USER:jazz}
+    password: ${DB_PASSWORD:jazz}
+  jpa:
+    open-in-view: false          # no lazy loading in the web layer: services return finished data
+    hibernate:
+      ddl-auto: validate         # Flyway owns the schema; Hibernate only checks that it matches
+  servlet:
+    multipart:
+      max-file-size: 2MB         # also enforced explicitly in UploadValidator
+      max-request-size: 3MB
+
+jazz:
+  upload:
+    max-bytes: 2097152           # 2 MB
+  storage:
+    local-dir: ${STORAGE_DIR:./data/uploads}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
