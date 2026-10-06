@@ -243,4 +243,21 @@ class MusicXmlParserTest {
         }
         assertThat(parser.parse(file).title()).isEqualTo("ii-V-I in C");
     }
+
+    @Test
+    void wellFormednessCheckAcceptsXmlWithoutLookingAtTheMusic() {
+        // valid XML with no chords is fine for this cheap check; analysis rejects it later
+        parser.requireWellFormedXml(new ByteArrayInputStream("<score-timewise/>".getBytes(StandardCharsets.UTF_8)));
+        parser.requireWellFormedXml(new ByteArrayInputStream("<a><b/></a>".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void wellFormednessCheckRejectsBrokenXmlWithAClearMessage() {
+        assertThatThrownBy(() -> parser.requireWellFormedXml(
+                new ByteArrayInputStream("<a><b></a>".getBytes(StandardCharsets.UTF_8))))
+                .isInstanceOf(ChartParseException.class)
+                .hasMessageContaining("not well-formed");
+        assertThatThrownBy(() -> parser.requireWellFormedXml(new ByteArrayInputStream(new byte[0])))
+                .isInstanceOf(ChartParseException.class);
+    }
 }

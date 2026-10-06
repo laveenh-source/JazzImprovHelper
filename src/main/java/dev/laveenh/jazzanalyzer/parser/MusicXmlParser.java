@@ -58,6 +58,15 @@ public final class MusicXmlParser {
         return toChart(readDocument(in));
     }
 
+    /**
+     * Cheap upload check: is this well-formed XML (read with the same secure settings as {@link #parse})?
+     * It does not look at the musical content, so a valid file with no chords passes here and is
+     * rejected later, during analysis, with a clear message.
+     */
+    public void requireWellFormedXml(InputStream in) {
+        readDocument(in);
+    }
+
     // ---------------------------------------------------------------- XML loading (secure)
 
     /**
