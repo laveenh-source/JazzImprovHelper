@@ -9,8 +9,10 @@ on:
 permissions:
   contents: read
 
+# A branch with an open pull request triggers both a "push" and a "pull_request" run. Grouping by the branch name
+# makes the second one replace the first instead of running everything twice. Runs on main are never cancelled.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
