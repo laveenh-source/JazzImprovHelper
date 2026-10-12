@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (which is git-ignored) and fill in.
+alert_email = "you@example.com"
+
+# region             = "us-east-1"
+# monthly_budget_usd = 20
+# desired_count      = 0     # raise to 1 after the first image is pushed (see docs/AWS_DEPLOYMENT.md)
