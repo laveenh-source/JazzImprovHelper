@@ -42,8 +42,26 @@ public class SongQueryRepository {
         if (column == null) {
             throw new IllegalArgumentException("Cannot sort by " + sortField);
         }
+        String sql = pageSql(column, ascending);
+        return jdbc.sql(sql)
+                .param("key", key)
+                .param("limit", limit)
+                .param("offset", offset)
+                .query((rs, row) -> new SongListRow(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("title"),
+                        rs.getString("original_filename"),
+                        rs.getObject("uploaded_at", java.time.OffsetDateTime.class).toInstant(),
+                        rs.getObject("analysis_id", UUID.class),
+                        rs.getString("status") == null ? null : AnalysisStatus.valueOf(rs.getString("status")),
+                        rs.getString("detected_key")))
+                .list();
+    }
+
+    /** The list query. {@code column} must come from the whitelist, never from the request. */
+    public static String pageSql(String column, boolean ascending) {
         // LATERAL lets the subquery see the current song, so each song brings only its newest analysis.
-        String sql = """
+        return """
                 SELECT s.id, s.title, s.original_filename, s.uploaded_at,
                        a.id AS analysis_id, a.status, a.detected_key
                 FROM songs s
@@ -59,19 +77,10 @@ public class SongQueryRepository {
                 ORDER BY ${order} NULLS LAST, s.id
                 LIMIT :limit OFFSET :offset
                 """.replace("${order}", column + (ascending ? " ASC" : " DESC"));
-        return jdbc.sql(sql)
-                .param("key", key)
-                .param("limit", limit)
-                .param("offset", offset)
-                .query((rs, row) -> new SongListRow(
-                        rs.getObject("id", UUID.class),
-                        rs.getString("title"),
-                        rs.getString("original_filename"),
-                        rs.getObject("uploaded_at", java.time.OffsetDateTime.class).toInstant(),
-                        rs.getObject("analysis_id", UUID.class),
-                        rs.getString("status") == null ? null : AnalysisStatus.valueOf(rs.getString("status")),
-                        rs.getString("detected_key")))
-                .list();
+    }
+
+    public static String sortColumn(String field) {
+        return SORT_COLUMNS.get(field);
     }
 
     public long count(String key) {

@@ -70,6 +70,15 @@ public class UploadValidator {
         return name.length() > MAX_DISPLAY_NAME_LENGTH ? name.substring(0, MAX_DISPLAY_NAME_LENGTH) : name;
     }
 
+    /** A name safe to echo in a response message even when it is not a valid upload name (never throws). */
+    public String safeNameForMessages(String originalFilename) {
+        try {
+            return displayName(originalFilename);
+        } catch (InvalidUploadException e) {
+            return "(no name)";
+        }
+    }
+
     private static void checkExtension(String name) {
         String lower = name.toLowerCase(Locale.ROOT);
         if (lower.endsWith(".mxl")) {
