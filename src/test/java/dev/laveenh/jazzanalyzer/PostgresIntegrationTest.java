@@ -19,7 +19,7 @@ import java.nio.file.Path;
  * make the suite slow), and one temporary directory plays the part of file storage. Because every
  * subclass uses the same configuration, Spring also reuses a single application context.
  */
-@SpringBootTest
+@SpringBootTest(properties = "jazz.analysis.mode=sync")   // most tests want the finished result straight away
 public abstract class PostgresIntegrationTest {
 
     static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
@@ -40,6 +40,9 @@ public abstract class PostgresIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("jazz.storage.local-dir", STORAGE_DIR::toString);
+        // many uploads come from one address (MockMvc is always 127.0.0.1), so the limits must not interfere
+        registry.add("jazz.rate-limit.uploads-per-minute", () -> "100000");
+        registry.add("jazz.rate-limit.requests-per-minute", () -> "100000");
     }
 
     @Autowired

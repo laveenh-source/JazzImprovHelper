@@ -148,7 +148,9 @@ class SongApiIntegrationTest extends PostgresIntegrationTest {
     void uploadingAFailedFileAgainRetriesWithANewAnalysis() throws Exception {
         byte[] content = fixture("no-harmony.xml");
         String first = upload("melody.xml", content).andReturn().getResponse().getContentAsString();
-        String second = upload("melody.xml", content).andReturn().getResponse().getContentAsString();
+        MvcResult secondResult = upload("melody.xml", content).andExpect(status().isAccepted()).andReturn();   // new work started
+        String second = secondResult.getResponse().getContentAsString();
+        assertThat(JsonPath.<Boolean>read(second, "$.duplicate")).isTrue();
 
         assertThat(JsonPath.<String>read(second, "$.songId")).isEqualTo(JsonPath.<String>read(first, "$.songId"));
         assertThat(JsonPath.<String>read(second, "$.analysisId")).isNotEqualTo(JsonPath.<String>read(first, "$.analysisId"));

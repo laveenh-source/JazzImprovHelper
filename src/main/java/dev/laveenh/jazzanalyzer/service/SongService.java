@@ -9,6 +9,7 @@ import dev.laveenh.jazzanalyzer.storage.FileStorage;
 import dev.laveenh.jazzanalyzer.storage.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -31,15 +32,18 @@ public class SongService {
     private final AnalysisRepository analyses;
     private final FileStorage storage;
     private final AnalysisExecutor executor;
+    private final AnalysisProcessor processor;
     private final TransactionTemplate tx;
     private final Clock clock;
 
     public SongService(SongRepository songs, AnalysisRepository analyses, FileStorage storage,
-                       AnalysisExecutor executor, TransactionTemplate tx, Clock clock) {
+                       AnalysisExecutor executor, AnalysisProcessor processor, TransactionTemplate tx,
+                       Clock clock) {
         this.songs = songs;
         this.analyses = analyses;
         this.storage = storage;
         this.executor = executor;
+        this.processor = processor;
         this.tx = tx;
         this.clock = clock;
     }
@@ -60,25 +64,38 @@ public class SongService {
         }
 
         String storageKey = storage.store(content);
+        SubmitResult created;
         try {
-            SubmitResult created = tx.execute(status -> {
+            created = tx.execute(status -> {
                 SongEntity song = songs.save(new SongEntity(titleFrom(displayName), displayName, storageKey,
                         checksum, clock.instant()));
                 AnalysisEntity analysis = analyses.save(AnalysisEntity.pending(song.getId(), clock.instant()));
-                return new SubmitResult(song.getId(), analysis.getId(), AnalysisStatus.PENDING, false);
+                return new SubmitResult(song.getId(), analysis.getId(), AnalysisStatus.PENDING, false, true);
             });
-            return run(created);
         } catch (DataIntegrityViolationException e) {
             // Two identical uploads raced and the other one won the UNIQUE checksum. Use its song.
             discard(storageKey);
             return reuse(songs.findByChecksumSha256(checksum).orElseThrow(() -> e));
         } catch (RuntimeException e) {
-            discard(storageKey);
+            discard(storageKey);   // nothing was saved, so the file would be orphaned
             throw e;
         }
+        // From here the song exists, so its file must stay even if the analysis cannot start right now.
+        return run(created);
+    }
+
+    /** The original uploaded file of a song, with a safe name to offer when it is downloaded. */
+    public StoredFile readFile(UUID songId) {
+        SongEntity song = songs.findById(songId).orElseThrow(() -> new NotFoundException("Song", songId));
+        return new StoredFile(storage.read(song.getStorageKey()), song.getOriginalFilename());
+    }
+
+    /** A stored file together with the name it was uploaded under. */
+    public record StoredFile(byte[] content, String filename) {
     }
 
     /** Deletes the song, its analyses (the database cascades) and the stored file. */
+    @CacheEvict(cacheNames = dev.laveenh.jazzanalyzer.config.CacheConfig.COMPLETED_ANALYSES, allEntries = true)
     public void delete(UUID songId) {
         SongEntity song = songs.findById(songId).orElseThrow(() -> new NotFoundException("Song", songId));
         songs.delete(song);
@@ -88,18 +105,24 @@ public class SongService {
     private SubmitResult reuse(SongEntity song) {
         AnalysisEntity latest = analyses.findFirstBySongIdOrderByCreatedAtDesc(song.getId()).orElse(null);
         if (latest != null && latest.getStatus() != AnalysisStatus.FAILED) {
-            return new SubmitResult(song.getId(), latest.getId(), latest.getStatus(), true);
+            return new SubmitResult(song.getId(), latest.getId(), latest.getStatus(), true, false);
         }
         AnalysisEntity retry = analyses.save(AnalysisEntity.pending(song.getId(), clock.instant()));
-        return run(new SubmitResult(song.getId(), retry.getId(), AnalysisStatus.PENDING, latest != null));
+        return run(new SubmitResult(song.getId(), retry.getId(), AnalysisStatus.PENDING, latest != null, true));
     }
 
     /** Starts the analysis and reports the status it has reached by the time this returns. */
     private SubmitResult run(SubmitResult submitted) {
-        executor.submit(submitted.analysisId());
+        try {
+            executor.submit(submitted.analysisId());
+        } catch (AnalysisQueueFullException e) {
+            // keep the rows but record why nothing ran; uploading the same file again retries it
+            processor.fail(submitted.analysisId(), e.getMessage());
+            throw e;
+        }
         AnalysisStatus status = analyses.findById(submitted.analysisId()).map(AnalysisEntity::getStatus)
                 .orElse(submitted.status());
-        return new SubmitResult(submitted.songId(), submitted.analysisId(), status, submitted.duplicate());
+        return new SubmitResult(submitted.songId(), submitted.analysisId(), status, submitted.duplicate(), submitted.newAnalysis());
     }
 
     /** Best-effort cleanup of a stored file: a leftover file must never turn a success into an error. */

@@ -16,11 +16,34 @@ spring:
       max-file-size: 2MB         # also enforced explicitly in UploadValidator
       max-request-size: 3MB
 
+server:
+  # Set FORWARD_HEADERS=framework only behind a load balancer you control: it makes the client IP
+  # (used for rate limiting) come from X-Forwarded-For, which a direct client could otherwise fake.
+  forward-headers-strategy: ${FORWARD_HEADERS:none}
+  shutdown: graceful
+
+logging:
+  pattern:
+    # every log line carries the request and analysis it belongs to (set by RequestIdFilter / AnalysisProcessor)
+    level: "%5p [req=%X{requestId:-}] [analysis=%X{analysisId:-}]"
+
 jazz:
   upload:
     max-bytes: 2097152           # 2 MB
   storage:
     local-dir: ${STORAGE_DIR:./data/uploads}
+    s3:                          # only used with SPRING_PROFILES_ACTIVE=s3
+      bucket: ${S3_BUCKET:}
+      region: ${AWS_REGION:us-east-1}
+      endpoint: ${S3_ENDPOINT:}  # blank on AWS; set for a local S3 stand-in
+      path-style: ${S3_PATH_STYLE:false}
+  analysis:
+    mode: ${ANALYSIS_MODE:async}      # async = background pool, sync = inside the request (used by most tests)
+    threads: ${ANALYSIS_THREADS:2}
+    queue-capacity: ${ANALYSIS_QUEUE:20}
+  rate-limit:
+    uploads-per-minute: ${RATE_LIMIT_UPLOADS:10}
+    requests-per-minute: ${RATE_LIMIT_REQUESTS:120}
 
 management:
   endpoints:

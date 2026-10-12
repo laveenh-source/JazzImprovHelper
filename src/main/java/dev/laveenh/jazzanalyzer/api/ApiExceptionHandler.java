@@ -2,6 +2,7 @@ package dev.laveenh.jazzanalyzer.api;
 
 import dev.laveenh.jazzanalyzer.api.dto.ErrorResponse;
 import dev.laveenh.jazzanalyzer.service.AnalysisNotReadyException;
+import dev.laveenh.jazzanalyzer.service.AnalysisQueueFullException;
 import dev.laveenh.jazzanalyzer.service.FileTooLargeException;
 import dev.laveenh.jazzanalyzer.service.InvalidUploadException;
 import dev.laveenh.jazzanalyzer.service.NotFoundException;
@@ -65,6 +66,14 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AnalysisNotReadyException.class)
     ResponseEntity<ErrorResponse> notReady(AnalysisNotReadyException e, HttpServletRequest request) {
         return error(HttpStatus.CONFLICT, e.getMessage(), request);
+    }
+
+    @ExceptionHandler(AnalysisQueueFullException.class)
+    ResponseEntity<ErrorResponse> busy(AnalysisQueueFullException e, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header(HttpHeaders.RETRY_AFTER, "5")
+                .body(new ErrorResponse(clock.instant(), 503, HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase(),
+                        e.getMessage(), request.getRequestURI()));
     }
 
     /** Last resort: log the details, tell the client nothing about the internals. */
