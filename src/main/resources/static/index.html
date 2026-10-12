@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jazz Chart Analyzer</title>
+  <meta name="description" content="Upload a MusicXML jazz lead sheet and see its keys, chord functions and suggested improvisation scales.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>Jazz Chart Analyzer</h1>
+      <p class="tagline">Upload a MusicXML lead sheet. Get its keys, the function of every chord, and ranked scales to improvise with.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section aria-labelledby="upload-title" class="card">
+      <h2 id="upload-title">Analyse a chart</h2>
+      <form id="upload-form" class="row">
+        <label class="file-label">
+          <span class="visually-hidden">MusicXML file</span>
+          <input id="file-input" type="file" accept=".xml,.musicxml" required>
+        </label>
+        <button type="submit" id="upload-button">Analyse</button>
+      </form>
+      <p class="hint">A <code>.xml</code> or <code>.musicxml</code> file with chord symbols, up to 2 MB. Export one from MuseScore, Finale or Sibelius.</p>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="result" class="card" hidden aria-labelledby="result-title">
+      <h2 id="result-title">Result</h2>
+      <p id="result-key" class="big"></p>
+      <ul id="regions" class="regions"></ul>
+
+      <h3>Score</h3>
+      <p class="hint">Each chord is labelled with its Roman numeral and its first-choice scale. The table below lists every suggestion with its notes and reason.</p>
+      <p id="score-error" class="error" hidden></p>
+      <div id="score-wrap" class="score-wrap"><div id="score"></div><div id="overlay"></div></div>
+
+      <h3>Chords</h3>
+      <div class="table-wrap">
+        <table id="chords">
+          <thead><tr><th>Bar</th><th>Chord</th><th>Numeral</th><th>Function</th><th>Key</th><th>Scales (first choice first)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="search-title" class="card">
+      <h2 id="search-title">Find a progression</h2>
+      <form id="search-form" class="row">
+        <label>Pattern
+          <select id="pattern">
+            <option>ii-V-I</option><option>ii-V-i</option><option>ii-V</option><option>V-I</option>
+            <option>I-vi-ii-V</option><option>iii-vi-ii-V</option><option>ii-bII7-I</option>
+          </select>
+        </label>
+        <label>Key <small>(optional)</small>
+          <input id="search-key" type="text" placeholder="Bb" maxlength="12" autocomplete="off">
+        </label>
+        <button type="submit">Search</button>
+      </form>
+      <p id="search-status" class="status" role="status" aria-live="polite"></p>
+      <ul id="search-results" class="results"></ul>
+    </section>
+
+    <section aria-labelledby="library-title" class="card">
+      <h2 id="library-title">Library</h2>
+      <form id="library-form" class="row">
+        <label>Key <small>(optional)</small>
+          <input id="library-key" type="text" placeholder="C major" maxlength="12" autocomplete="off">
+        </label>
+        <button type="submit">Filter</button>
+      </form>
+      <div class="table-wrap">
+        <table id="library">
+          <thead><tr><th>Title</th><th>Key</th><th>Status</th><th>Uploaded</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="row pager">
+        <button type="button" id="prev-page">Previous</button>
+        <span id="page-info"></span>
+        <button type="button" id="next-page">Next</button>
+      </p>
+    </section>
+  </main>
+
+  <footer class="wrap site-footer">
+    <p>Rule-based music theory, no machine learning. <a href="/swagger-ui.html">API documentation</a></p>
+  </footer>
+
+  <script src="vendor/opensheetmusicdisplay/opensheetmusicdisplay.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
