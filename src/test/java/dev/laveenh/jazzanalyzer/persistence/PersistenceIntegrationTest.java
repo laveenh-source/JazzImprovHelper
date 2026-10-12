@@ -52,6 +52,14 @@ class PersistenceIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
+    void theIndexesThatWereMeasuredToHelpExistAndTheOneThatDidNotIsAbsent() {
+        List<String> indexes = jdbc.queryForList("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'", String.class);
+        assertThat(indexes).contains("idx_analyses_song_created", "idx_key_regions_analysis",
+                "idx_scale_suggestions_chord", "idx_chords_analysis_position");
+        assertThat(indexes).doesNotContain("idx_chords_quality_roman");
+    }
+
+    @Test
     void storesAndReadsBackAWholeAnalysis() {
         SongEntity song = song("Tune", 'a', Instant.now().truncatedTo(ChronoUnit.MICROS));
         AnalysisEntity analysis = completeAnalysis(song, "C major", Instant.now());
