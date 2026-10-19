@@ -1,7 +1,6 @@
 # Jazz Chart Analyzer
 
 [![CI](https://github.com/laveenh-source/JazzImprovHelper/actions/workflows/ci.yml/badge.svg)](https://github.com/laveenh-source/JazzImprovHelper/actions/workflows/ci.yml)
-![coverage](.github/badges/jacoco.svg)
 
 Upload a **MusicXML jazz lead sheet** and get back:
 
@@ -10,8 +9,8 @@ Upload a **MusicXML jazz lead sheet** and get back:
    diminished passing chord, borrowed chord, or honestly "unclassified"),
 3. **ranked improvisation scales for each chord**, spelled correctly, each with a plain-English reason,
 
-and **search the library** ("every tune with a ii-V-I in Bb"). Built with Java 21, Spring Boot 4, PostgreSQL,
-Docker, GitHub Actions and Terraform for AWS.
+and **search the library** ("every tune with a ii-V-I in Bb"). Built with Java, Spring Boot, PostgreSQL,
+Docker and GitHub Actions.
 
 > **A deliberate design choice:** this is a **rule-based music-theory engine**. There is no machine learning, no audio
 > processing and no sheet-music image recognition. The rules are written down in a data file a musician can read and
@@ -36,7 +35,7 @@ Try it on the included original [demo tune](docs/examples/demo-tune.xml).
 ```mermaid
 flowchart LR
     Client["Browser or curl"] -->|"1. POST /songs (MusicXML)"| API["REST API<br/>Spring Boot"]
-    API -->|"2. validate, store file"| Storage[("File storage<br/>local disk or S3")]
+    API -->|"2. validate, store file"| Storage[("File storage<br/>(local disk)")]
     API -->|"3. create song + PENDING analysis"| DB[("PostgreSQL")]
     API -->|"4. 202 Accepted + analysis id"| Client
     API -.->|"5. queue (bounded)"| Worker["Async worker pool"]
@@ -59,8 +58,8 @@ cli/           command-line front end
 api/           controllers, DTOs, one JSON error format, OpenAPI
 service/       upload validation, dedupe, async processing
 persistence/   JPA entities, repositories, hand-written SQL
-storage/       FileStorage: local disk and S3
-config/        wiring, filters (request id, rate limit, security headers)
+storage/       FileStorage interface, local-disk implementation
+config/        wiring, the background worker pool, security headers
 resources/theory/   chord-kinds.properties, scale-rules.json   <- edit these to change the theory
 resources/static/   the web page (OpenSheetMusicDisplay, bundled)
 ```
@@ -73,8 +72,7 @@ resources/static/   the web page (OpenSheetMusicDisplay, bundled)
 docker compose up --build
 ```
 
-This starts the app, PostgreSQL and a local stand-in for Amazon S3 (so the app uses the same S3 code path it uses
-on AWS). Then open **http://localhost:8080** (the web page) or **http://localhost:8080/swagger-ui.html** (API docs), or:
+This starts the app and PostgreSQL (uploaded charts are kept in a Docker volume). Then open **http://localhost:8080** (the web page) or **http://localhost:8080/swagger-ui.html** (API docs), or:
 
 ```bash
 scripts/smoke-test.sh      # uploads a chart, waits for the analysis, checks the answer, searches, cleans up
@@ -89,8 +87,7 @@ mvn -q compile exec:java -Dexec.args="src/test/resources/fixtures/minor-ii-v-i.x
 ```
 
 Settings (all have local defaults; none are secrets in git): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `STORAGE_DIR`,
-`SPRING_PROFILES_ACTIVE=s3` with `S3_BUCKET` / `S3_ENDPOINT` / `S3_PATH_STYLE`, `ANALYSIS_MODE`, `ANALYSIS_THREADS`,
-`ANALYSIS_QUEUE`, `RATE_LIMIT_UPLOADS`, `RATE_LIMIT_REQUESTS`.
+`ANALYSIS_MODE` (`async` or `sync`), `ANALYSIS_THREADS`, `ANALYSIS_QUEUE`.
 
 ## API
 
@@ -99,8 +96,7 @@ Base path `/api/v1`. Errors always look like `{timestamp, status, error, message
 
 | Method and path | What it does |
 |---|---|
-| `POST /songs` | Upload one `.xml`/`.musicxml` file (up to 2 MB). **202** with an analysis id, or **200** if that exact file was analysed before. **503** when the work queue is full. |
-| `POST /songs/batch` | Upload up to 10 files; each is handled on its own and reported per file. |
+| `POST /songs` | Upload one `.xml`/`.musicxml` file (up to 2 MB). **202** with an analysis id, or **200** if that exact file was analysed before. **503** when the background queue is full. |
 | `GET /analyses/{id}` | Status (`PENDING`, `RUNNING`, `COMPLETE`, `FAILED`) and, when complete, the key regions and every chord with scales. |
 | `GET /songs?page&size&sort&key` | Paginated list; sort by `title`, `uploadedAt`, `detectedKey`; filter by key. |
 | `GET /songs/{id}`, `/songs/{id}/chords`, `/songs/{id}/file` | Song summary, per-chord detail, the original file (as a download). |
@@ -134,13 +130,13 @@ Fixtures in `src/test/resources/fixtures` are hand-written and tiny; no copyrigh
 Everything below was measured, by a script or a build in this repository; where something was **not** measured it says so.
 Method, machine and caveats are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
-**Tests and coverage** (`mvn verify`: 489 tests, 0 failures; real PostgreSQL via Testcontainers; a fake S3 in Docker)
+**Tests and coverage** (`mvn verify`: 466 tests, 0 failures; the database tests run against a real PostgreSQL started by Testcontainers)
 
 | package | line coverage |
 |---|---:|
 | `analysis` (key detection, functions, scales) | 99.4% |
 | `domain` | 98.3% |
-| all packages together | 96.4% (1,637 of 1,699 lines) |
+| all packages together | 96.4% (1,523 of 1,580 lines) |
 
 The build fails if `domain` or `analysis` fall under 80%.
 
@@ -156,11 +152,10 @@ The build fails if `domain` or `analysis` fall under 80%.
 | Progression search, in Bb | 2,145 ms | **1,101 ms** | the same rewrite |
 | An index suggested up front, `chords(quality, roman_numeral)` | | **no effect** | measured, then left out of the schema |
 
-**Container**: the final image is 428 MB (the jar alone is 74 MB), runs as a non-root user, and holds no compiler or Maven.
-`docker compose up` brings up the app, PostgreSQL and an S3 stand-in, and `scripts/smoke-test.sh` passes against it.
+**Container**: the final image is 404 MB (the jar alone is 62 MB), runs as a non-root user, and holds no compiler or Maven.
+`docker compose up` brings up the app and PostgreSQL, and `scripts/smoke-test.sh` passes against it.
 
-**Not measured**: HTTP load or concurrency (no load test was run), the AWS deployment (never applied to an account), and
-real, non-synthetic libraries.
+**Not measured**: HTTP load or concurrency (no load test was run) and real, non-synthetic libraries.
 
 Screenshots of the web page (original demo tune, `docs/examples/demo-tune.xml`):
 
@@ -173,13 +168,10 @@ Screenshots of the web page (original demo tune, `docs/examples/demo-tune.xml`):
 
 - Rule-based: it only knows the patterns it was given. Unexplained chords are labelled unclassified.
 - Confidence numbers are heuristic scores, not probabilities.
-- Compressed `.mxl` files are not supported yet. There is **no authentication**: the API is open.
-- The AWS deployment is written and validated (`terraform validate`) but **has not been applied to a real account**
-  yet, so there is no live demo link. See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) for what that means.
+- Compressed `.mxl` files are not supported yet. There is **no authentication and no rate limiting**: the API is open.
 
 ## Documentation
 
 - [How the analyzer works, step by step](docs/HOW_IT_WORKS.md)
 - [Design decisions](docs/DESIGN_DECISIONS.md)
 - [Performance measurements](docs/PERFORMANCE.md)
-- [AWS deployment, costs and teardown](docs/AWS_DEPLOYMENT.md)

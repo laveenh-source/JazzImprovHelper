@@ -12,7 +12,7 @@ they showed: the biggest win was **not an index**.
 | PostgreSQL | 16.14, local, **default settings** (`shared_buffers` 128 MB, `work_mem` 4 MB) |
 | Data | **synthetic**: 5,000 songs, 5,000 analyses, **328,650 chords**, 657,300 scale rows, made by `scripts/perf/generate-synthetic-data.sql` from randomly transposed standard progressions. Not real music. |
 | Method | each query is run once to warm up, then 5 times; the table shows the **median** `Execution Time` from `EXPLAIN (ANALYZE)` |
-| Not measured | HTTP latency, concurrent load, the AWS deployment (never deployed), and real, differently-shaped data |
+| Not measured | HTTP latency, concurrent load, and real, differently-shaped data |
 
 Results on other hardware, other settings or real data will differ. The *shape* of the findings (which fix mattered)
 is more reliable than the absolute milliseconds.
@@ -85,12 +85,12 @@ access or the shape of the query.*
 
 ## What I did not measure
 
-- **HTTP load.** There is no load test of the running service (no k6/JMeter run), neither locally nor on AWS.
+- **HTTP load.** There is no load test of the running service (no k6/JMeter run).
   A k6 script is not included because I could not run one, and I would rather ship no number than an invented one.
 - **Concurrency.** All timings are single-query. Several searches at once would compete for the CPU and `work_mem`.
 - **The upload path end to end** (file in, rows out): only its two halves are timed (engine above; row counts in tests).
 - **Real data.** Real charts have different chord counts and repeat structure than the generator produces.
-- **Cold start, memory use, and the AWS environment.**
+- **Cold start and memory use.**
 
 ## Reproduce
 
