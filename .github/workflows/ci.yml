@@ -1,7 +1,6 @@
 name: CI
 
 # Every push and pull request: run the tests, check coverage, build the image, and smoke-test the whole system.
-# A push to main that passes all of that is also deployed to AWS (the last job), if AWS has been set up.
 on:
   push:
   pull_request:
@@ -72,7 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Builds the image from the Dockerfile, starts the app + PostgreSQL + the S3 stand-in with
+      # Builds the image from the Dockerfile, starts the app and PostgreSQL with
       # Docker Compose, and drives the real HTTP API (upload, analyse, search, delete).
       - name: Start the whole system
         run: docker compose up --build --detach --wait --wait-timeout 240
@@ -87,100 +86,3 @@ jobs:
       - name: Stop the system
         if: always()
         run: docker compose down --volumes
-
-  badge:
-    name: Update the coverage badge
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write          # this job commits the generated badge file
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: jacoco-report
-          path: target/site/jacoco
-      - uses: cicirello/jacoco-badge-generator@v2
-        with:
-          jacoco-csv-file: target/site/jacoco/jacoco.csv
-          badges-directory: .github/badges
-          generate-coverage-badge: true
-      - name: Commit the badge if it changed
-        run: |
-          if [ -n "$(git status --porcelain .github/badges)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add .github/badges
-            git commit -m "chore: update coverage badge [skip ci]"
-            git push
-          fi
-
-  deploy:
-    name: Deploy to AWS
-    needs: [test, docker]
-    # Only a push to main, and only once AWS has been set up (see docs/AWS_DEPLOYMENT.md): until the
-    # repository variable AWS_DEPLOY_ROLE_ARN exists this job is skipped, so CI stays green without AWS.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
-    runs-on: ubuntu-latest
-    environment: production     # in GitHub's settings you can require a manual approval for this environment
-    concurrency:
-      group: deploy-production
-      cancel-in-progress: false
-    permissions:
-      id-token: write           # lets the job ask GitHub for an OIDC token: there are NO long-lived AWS keys
-      contents: read
-    env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
-      ECS_SERVICE: ${{ vars.ECS_SERVICE }}
-      ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Sign in to AWS with OIDC (no stored access keys)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Log in to Amazon ECR
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push the image (tagged with the commit)
-        id: image
-        run: |
-          IMAGE="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY}:${GITHUB_SHA}"
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
-          # tags in ECR are immutable, so a re-run of the same commit must not push again
-          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids imageTag="$GITHUB_SHA" >/dev/null 2>&1; then
-            echo "Image $IMAGE already exists; skipping the push."
-          else
-            docker build -t "$IMAGE" .
-            docker push "$IMAGE"
-          fi
-
-      - name: Get the current task definition
-        run: aws ecs describe-task-definition --task-definition "$ECS_TASK_FAMILY" --query taskDefinition > task-definition.json
-
-      - name: Point the task definition at the new image
-        id: render
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: app
-          image: ${{ steps.image.outputs.image }}
-
-      - name: Deploy to ECS and wait until it is stable
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.render.outputs.task-definition }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          service: ${{ vars.ECS_SERVICE }}
-          wait-for-service-stability: true
-
-      - name: Smoke test the live service
-        if: vars.APP_URL != ''
-        run: scripts/smoke-test.sh "${{ vars.APP_URL }}"

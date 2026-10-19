@@ -3,7 +3,6 @@
 .idea
 target
 data
-infra
 docs
 scripts
 *.md

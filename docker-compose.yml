@@ -1,13 +1,11 @@
 # Runs the whole system on a fresh machine:   docker compose up --build
-# Then open http://localhost:8080/swagger-ui.html  (or run scripts/smoke-test.sh)
+# Then open http://localhost:8080 (the web page) or http://localhost:8080/swagger-ui.html (the API docs),
+# or run scripts/smoke-test.sh against it.
 #
 # - db:  PostgreSQL
-# - s3:  a local stand-in for Amazon S3 (Adobe S3Mock), so the app uses its real S3 storage code
-#        path, the same one it uses on AWS. For development only: it keeps files in memory.
-# - app: this project, built from the Dockerfile
+# - app: this project, built from the Dockerfile; uploaded charts are kept in the "uploads" volume
 #
-# The passwords below are throw-away local-development defaults. Nothing here is used in AWS,
-# where the database password comes from AWS Secrets Manager.
+# The password below is a throw-away local-development default.
 services:
   db:
     image: postgres:16-alpine
@@ -23,13 +21,6 @@ services:
       timeout: 3s
       retries: 10
 
-  s3:
-    image: adobe/s3mock:latest
-    environment:
-      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: jazz-uploads
-    ports:
-      - "9090:9090"
-
   app:
     image: jazz-analyzer:local
     build:
@@ -41,22 +32,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      s3:
-        condition: service_started
     environment:
-      SPRING_PROFILES_ACTIVE: s3
       DB_URL: jdbc:postgresql://db:5432/jazz
       DB_USER: jazz
       DB_PASSWORD: ${POSTGRES_PASSWORD:-jazz}
-      S3_BUCKET: jazz-uploads
-      S3_ENDPOINT: http://s3:9090
-      S3_PATH_STYLE: "true"
-      AWS_REGION: us-east-1
-      # the S3 stand-in accepts any credentials; real AWS uses the task's IAM role instead
-      AWS_ACCESS_KEY_ID: local
-      AWS_SECRET_ACCESS_KEY: local
+    volumes:
+      - uploads:/data/uploads      # the image's STORAGE_DIR
     ports:
       - "8080:8080"
 
 volumes:
   pgdata:
+  uploads:
