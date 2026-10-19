@@ -1,0 +1,46 @@
+# Runs the whole system on a fresh machine:   docker compose up --build
+# Then open http://localhost:8080 (the web page) or http://localhost:8080/swagger-ui.html (the API docs),
+# or run scripts/smoke-test.sh against it.
+#
+# - db:  PostgreSQL
+# - app: this project, built from the Dockerfile; uploaded charts are kept in the "uploads" volume
+#
+# The password below is a throw-away local-development default.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: jazz
+      POSTGRES_USER: jazz
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jazz}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jazz -d jazz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    image: jazz-analyzer:local
+    build:
+      context: .
+      args:
+        # override these to build through a registry mirror: MAVEN_IMAGE=... JRE_IMAGE=... docker compose up --build
+        MAVEN_IMAGE: ${MAVEN_IMAGE:-maven:3.9-eclipse-temurin-21}
+        JRE_IMAGE: ${JRE_IMAGE:-eclipse-temurin:21-jre-alpine}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/jazz
+      DB_USER: jazz
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-jazz}
+    volumes:
+      - uploads:/data/uploads      # the image's STORAGE_DIR
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
+  uploads:
