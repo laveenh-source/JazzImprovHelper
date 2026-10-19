@@ -19,7 +19,7 @@ class UploadValidatorTest {
     private static final String XML = "<score-partwise/>";
 
     private final UploadValidator validator = new UploadValidator(
-            new JazzProperties(new JazzProperties.Upload(MAX), new JazzProperties.Storage(Path.of("unused"), null)),
+            new JazzProperties(new JazzProperties.Upload(MAX), new JazzProperties.Storage(Path.of("unused"))),
             new MusicXmlParser());
 
     private static MockMultipartFile file(String name, String content) {

@@ -1,6 +1,5 @@
 package dev.laveenh.jazzanalyzer.api;
 
-import dev.laveenh.jazzanalyzer.api.dto.BatchItemResponse;
 import dev.laveenh.jazzanalyzer.api.dto.PageResponse;
 import dev.laveenh.jazzanalyzer.api.dto.SongChordsResponse;
 import dev.laveenh.jazzanalyzer.api.dto.SongDetailDto;
@@ -8,12 +7,8 @@ import dev.laveenh.jazzanalyzer.api.dto.SongSummaryDto;
 import dev.laveenh.jazzanalyzer.api.dto.UploadResponse;
 import dev.laveenh.jazzanalyzer.persistence.SongQueryRepository;
 import dev.laveenh.jazzanalyzer.service.AnalysisQueryService;
-import dev.laveenh.jazzanalyzer.service.AnalysisQueueFullException;
-import dev.laveenh.jazzanalyzer.service.FileTooLargeException;
-import dev.laveenh.jazzanalyzer.service.InvalidUploadException;
 import dev.laveenh.jazzanalyzer.service.SongService;
 import dev.laveenh.jazzanalyzer.service.SubmitResult;
-import dev.laveenh.jazzanalyzer.service.UnsupportedFileTypeException;
 import dev.laveenh.jazzanalyzer.service.UploadValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,7 +37,6 @@ import java.util.UUID;
 public class SongController {
 
     private static final int MAX_PAGE_SIZE = 100;
-    private static final int MAX_BATCH_FILES = 10;
 
     private final UploadValidator validator;
     private final SongService songService;
@@ -70,31 +63,6 @@ public class SongController {
         return ResponseEntity.status(result.newAnalysis() ? HttpStatus.ACCEPTED : HttpStatus.OK)
                 .location(URI.create(analysisUrl))
                 .body(body);
-    }
-
-    @Operation(summary = "Upload several lead sheets at once",
-            description = "Send up to 10 files as repeated 'files' parts. Each file is validated and queued on its own, "
-                    + "so the analyses run concurrently; the response lists, per file, either the analysis to poll or "
-                    + "the reason it was refused. A bad file never blocks the others.")
-    @PostMapping(value = "/batch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<BatchItemResponse>> uploadBatch(@RequestPart("files") List<MultipartFile> files) {
-        if (files.isEmpty() || files.size() > MAX_BATCH_FILES) {
-            throw new InvalidRequestException("Send between 1 and " + MAX_BATCH_FILES + " files per batch.");
-        }
-        List<BatchItemResponse> items = new ArrayList<>();
-        for (MultipartFile file : files) {
-            String name = file.getOriginalFilename() == null ? "(no name)" : validator.safeNameForMessages(file.getOriginalFilename());
-            try {
-                byte[] content = validator.validate(file);
-                SubmitResult r = songService.submit(validator.displayName(file.getOriginalFilename()), content);
-                items.add(BatchItemResponse.accepted(name, r.songId(), r.analysisId(), r.status(), r.duplicate()));
-            } catch (AnalysisQueueFullException e) {
-                items.add(BatchItemResponse.rejected(name, e.getMessage()));
-            } catch (InvalidUploadException | UnsupportedFileTypeException | FileTooLargeException e) {
-                items.add(BatchItemResponse.rejected(name, e.getMessage()));
-            }
-        }
-        return ResponseEntity.accepted().body(items);
     }
 
     @Operation(summary = "List songs",

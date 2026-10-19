@@ -9,12 +9,10 @@ import dev.laveenh.jazzanalyzer.storage.FileStorage;
 import dev.laveenh.jazzanalyzer.storage.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
@@ -95,7 +93,6 @@ public class SongService {
     }
 
     /** Deletes the song, its analyses (the database cascades) and the stored file. */
-    @CacheEvict(cacheNames = dev.laveenh.jazzanalyzer.config.CacheConfig.COMPLETED_ANALYSES, allEntries = true)
     public void delete(UUID songId) {
         SongEntity song = songs.findById(songId).orElseThrow(() -> new NotFoundException("Song", songId));
         songs.delete(song);

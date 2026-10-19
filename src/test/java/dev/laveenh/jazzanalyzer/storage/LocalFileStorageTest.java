@@ -24,7 +24,7 @@ class LocalFileStorageTest {
     @BeforeEach
     void setUp() {
         uploads = root.resolve("uploads");   // does not exist yet: the storage must create it
-        storage = new LocalFileStorage(new JazzProperties(new JazzProperties.Upload(1), new JazzProperties.Storage(uploads, null)));
+        storage = new LocalFileStorage(new JazzProperties(new JazzProperties.Upload(1), new JazzProperties.Storage(uploads)));
     }
 
     private static byte[] bytes(String s) {

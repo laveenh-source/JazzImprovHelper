@@ -1,8 +1,8 @@
 package dev.laveenh.jazzanalyzer.storage;
 
 /**
- * Where uploaded charts are kept. The app only knows this interface; local disk is used in development
- * and S3 in production (selected by Spring profile), so nothing else changes between the two.
+ * Where uploaded charts are kept. The rest of the app only knows this interface, so the storage could change
+ * (for example to a cloud bucket) without touching anything else. Today there is one implementation: local disk.
  */
 public interface FileStorage {
 

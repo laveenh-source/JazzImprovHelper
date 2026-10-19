@@ -13,7 +13,6 @@ import dev.laveenh.jazzanalyzer.persistence.SongEntity;
 import dev.laveenh.jazzanalyzer.persistence.SongListRow;
 import dev.laveenh.jazzanalyzer.persistence.SongQueryRepository;
 import dev.laveenh.jazzanalyzer.persistence.SongRepository;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,9 +48,6 @@ public class AnalysisQueryService {
         this.songQueries = songQueries;
     }
 
-    /** Finished analyses never change, so they are cached; PENDING/RUNNING/FAILED ones are always re-read. */
-    @Cacheable(cacheNames = dev.laveenh.jazzanalyzer.config.CacheConfig.COMPLETED_ANALYSES, key = "#analysisId",
-            unless = "#result.analysis().status.name() != 'COMPLETE'")
     public AnalysisDetails getAnalysis(UUID analysisId) {
         AnalysisEntity analysis = analyses.findById(analysisId)
                 .orElseThrow(() -> new NotFoundException("Analysis", analysisId));

@@ -21,7 +21,6 @@ import dev.laveenh.jazzanalyzer.persistence.SongEntity;
 import dev.laveenh.jazzanalyzer.persistence.SongRepository;
 import dev.laveenh.jazzanalyzer.storage.FileStorage;
 import org.slf4j.Logger;
-import org.slf4j.MDC;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -74,7 +73,6 @@ public class AnalysisProcessor {
     }
 
     public void process(UUID analysisId) {
-        MDC.put("analysisId", analysisId.toString());
         try {
             UUID songId = tx.execute(status -> start(analysisId));
             SongEntity song = songs.findById(songId).orElseThrow();
@@ -90,8 +88,6 @@ public class AnalysisProcessor {
         } catch (Exception e) {
             log.error("Analysis {} failed unexpectedly", analysisId, e);
             fail(analysisId, "The analysis failed because of an internal error.");
-        } finally {
-            MDC.remove("analysisId");
         }
     }
 

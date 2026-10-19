@@ -40,9 +40,6 @@ public abstract class PostgresIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("jazz.storage.local-dir", STORAGE_DIR::toString);
-        // many uploads come from one address (MockMvc is always 127.0.0.1), so the limits must not interfere
-        registry.add("jazz.rate-limit.uploads-per-minute", () -> "100000");
-        registry.add("jazz.rate-limit.requests-per-minute", () -> "100000");
     }
 
     @Autowired

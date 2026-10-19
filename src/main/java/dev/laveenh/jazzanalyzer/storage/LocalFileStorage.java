@@ -1,7 +1,6 @@
 package dev.laveenh.jazzanalyzer.storage;
 
 import dev.laveenh.jazzanalyzer.config.JazzProperties;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -10,9 +9,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.UUID;
 
-/** Development storage: one file per upload in a local directory. Active unless the {@code s3} profile is on. */
+/** Keeps each upload as one file in a local directory, under a name we generate. */
 @Component
-@Profile("!s3")
 public class LocalFileStorage implements FileStorage {
 
     private final Path directory;

@@ -22,21 +22,7 @@
         <jacoco.version>0.8.12</jacoco.version>
         <scale-rules.jackson.version>2.18.2</scale-rules.jackson.version>
         <springdoc.version>3.1.1</springdoc.version>
-        <bucket4j.version>8.21.0</bucket4j.version>
-        <aws-sdk.version>2.55.14</aws-sdk.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>software.amazon.awssdk</groupId>
-                <artifactId>bom</artifactId>
-                <version>${aws-sdk.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <!-- Reads the scale rule table (theory/scale-rules.json) in the Spring-free engine. -->
@@ -65,31 +51,6 @@
             <version>${springdoc.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-cache</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j_jdk17-core</artifactId>
-            <version>${bucket4j.version}</version>
-        </dependency>
-
-        <!-- Amazon S3, used by the "s3" profile for uploaded files -->
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-            <exclusions>
-                <exclusion>   <!-- the async Netty client is not used; the synchronous Apache client is -->
-                    <groupId>software.amazon.awssdk</groupId>
-                    <artifactId>netty-nio-client</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <!-- Persistence -->
         <dependency>
